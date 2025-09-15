@@ -2,16 +2,15 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Task } from "app/lib/types";
 
 type SortableTaskProps = {
-  task: Task;
+  task: { id: string; title: string };
   columnId: string;
   index: number;
   onDeleteTask: (id: string) => void;
 };
 
-export default function SortableTask({ task, columnId, index, onDeleteTask }: SortableTaskProps) {
+export default function SortableTask({ task, onDeleteTask }: SortableTaskProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
   });
@@ -27,7 +26,7 @@ export default function SortableTask({ task, columnId, index, onDeleteTask }: So
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-gray-100 rounded-md p-2 flex justify-between items-center cursor-move"
+      className="bg-white rounded-md p-2 flex justify-between items-center shadow cursor-move"
     >
       <span>{task.title}</span>
       <button

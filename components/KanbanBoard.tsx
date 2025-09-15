@@ -1,92 +1,125 @@
 "use client";
 
-import { useMutation, useQuery } from "@apollo/client";
+import { useState } from "react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
-import {
-  ADD_TASK,
-  DELETE_TASK,
-  GET_COLUMNS_WITH_TASKS,
-  UPDATE_TASK_POSITION,
-} from 'lib/queries';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Column from "./Column";
 
+type Task = {
+  id: string;
+  title: string;
+};
+
+type ColumnType = {
+  id: string;
+  title: string;
+  tasks: Task[];
+};
+
 export default function KanbanBoard() {
-  const { data, loading, error, refetch } = useQuery(GET_COLUMNS_WITH_TASKS);
-  const [addTask] = useMutation(ADD_TASK);
-  const [updateTaskPosition] = useMutation(UPDATE_TASK_POSITION);
-  const [deleteTask] = useMutation(DELETE_TASK);
+  const [columns, setColumns] = useState<ColumnType[]>([
+    {
+      id: "todo",
+      title: "Todo",
+      tasks: [
+        { id: "task-1", title: "First task" },
+        { id: "task-2", title: "Second task" },
+      ],
+    },
+    {
+      id: "progress",
+      title: "In Progress",
+      tasks: [{ id: "task-3", title: "Working task" }],
+    },
+    {
+      id: "done",
+      title: "Done",
+      tasks: [{ id: "task-4", title: "Finished task" }],
+    },
+  ]);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-
-  const columns = data?.columns || [];
-
-  // ✅ Add new task
-  function handleAddTask(columnId: string, title: string) {
-    addTask({
-      variables: {
-        title,
-        column_id: columnId,
-        position:
-          columns.find((c: any) => c.id === columnId)?.tasks.length || 0,
-      },
-    })
-      .then(() => refetch())
-      .catch((err) => console.error("Add error:", err));
-  }
+  // ✅ Add task
+  const handleAddTask = (columnId: string, title: string) => {
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === columnId
+          ? {
+              ...col,
+              tasks: [
+                ...col.tasks,
+                { id: `task-${Date.now()}`, title },
+              ],
+            }
+          : col
+      )
+    );
+  };
 
   // ✅ Delete task
-  function handleDeleteTask(taskId: string) {
-    deleteTask({ variables: { id: taskId } })
-      .then(() => refetch())
-      .catch((err) => console.error("Delete error:", err));
-  }
+  const handleDeleteTask = (taskId: string, columnId: string) => {
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === columnId
+          ? {
+              ...col,
+              tasks: col.tasks.filter((t) => t.id !== taskId),
+            }
+          : col
+      )
+    );
+  };
 
-  // ✅ Drag/drop reorder
-  function handleDragEnd(event: any) {
+  // ✅ Drag/Drop reorder
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over) return;
 
-    const sourceCol = columns.find((col: any) =>
-      col.tasks.some((t: any) => t.id === active.id) // 🔧 fix line 74
+    const [sourceCol, sourceTask] = findTask(active.id);
+    const [destCol] = findTask(over.id);
+
+    if (!sourceCol || !sourceTask || !destCol) return;
+
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id === sourceCol.id) {
+          return { ...col, tasks: col.tasks.filter((t) => t.id !== active.id) };
+        }
+        if (col.id === destCol.id) {
+          const idx = col.tasks.findIndex((t) => t.id === over.id);
+          const newTasks =
+            idx === -1
+              ? [...col.tasks, sourceTask]
+              : arrayMove([...col.tasks, sourceTask], col.tasks.length, idx);
+          return { ...col, tasks: newTasks };
+        }
+        return col;
+      })
     );
-    const destCol = columns.find(
-      (col: any) =>
-        col.tasks.some((t: any) => t.id === over.id) || col.id === over.id
-    );
-    if (!sourceCol || !destCol) return;
+  };
 
-    const sourceTaskIdx = sourceCol.tasks.findIndex(
-      (t: any) => t.id === active.id
-    );
-
-    // ✅ compute drop destination
-    let destTaskIdx = destCol.tasks.findIndex((t: any) => t.id === over.id); // 🔧 fix line 56
-    if (destTaskIdx === -1) destTaskIdx = destCol.tasks.length;
-
-    const movedTask = sourceCol.tasks[sourceTaskIdx];
-
-    updateTaskPosition({
-      variables: {
-        id: movedTask.id,
-        position: destTaskIdx,
-        column_id: destCol.id,
-      },
-    })
-      .then(() => refetch())
-      .catch((err) => console.error("Update error:", err));
-  }
+  const findTask = (taskId: string): [ColumnType | undefined, Task | undefined] => {
+    for (let col of columns) {
+      const task = col.tasks.find((t) => t.id === taskId);
+      if (task) return [col, task];
+    }
+    return [undefined, undefined];
+  };
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div style={{ display: "flex", gap: 16, padding: 16 }}>
-        {columns.map((col: any) => (
-          <Column
+      <div className="flex gap-6 p-6">
+        {columns.map((col) => (
+          <SortableContext
             key={col.id}
-            column={col}
-            onAddTask={handleAddTask}
-            onDeleteTask={handleDeleteTask}
-          />
+            items={col.tasks.map((t) => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <Column
+              column={col}
+              onAddTask={handleAddTask}
+              onDeleteTask={handleDeleteTask}
+            />
+          </SortableContext>
         ))}
       </div>
     </DndContext>
