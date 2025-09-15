@@ -1,82 +1,80 @@
 "use client";
 
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useState } from "react";
-import SortableTask from "./SortableTask";
+import { Task } from "lib/types";
+import React, { useState } from "react";
 
-export default function Column({ column, onAddTask, onDeleteTask }: any) {
-  const { setNodeRef } = useDroppable({ id: column.id });
+type ColumnProps = {
+  column: {
+    id: string;
+    title: string;
+    tasks: Task[];
+  };
+  onAddTask: (columnId: string, title: string) => void;
+  onDeleteTask: (taskId: string) => void;
+};
+
+export default function Column({ column, onAddTask, onDeleteTask }: ColumnProps) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     onAddTask(column.id, newTaskTitle);
     setNewTaskTitle("");
-  }
+  };
 
   return (
     <div
-      ref={setNodeRef}
       style={{
         flex: 1,
-        padding: "8px",
-        background: "#fafafa",
+        padding: "1rem",
+        border: "1px solid #ddd",
         borderRadius: "8px",
-        minHeight: "150px",
-        display: "flex",
-        flexDirection: "column",
+        background: "#fafafa",
       }}
     >
-      {/* Column title */}
-      <h2 style={{ marginBottom: 8, textAlign: "center" }}>{column.title}</h2>
+      <h2>{column.title}</h2>
 
-      {/* Task list */}
-      <SortableContext
-        items={column.tasks.map((t: any) => t.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div style={{ flexGrow: 1, marginBottom: "8px" }}>
-          {column.tasks.length > 0 ? (
-            column.tasks.map((task: any) => (
-              <SortableTask key={task.id} task={task} onDeleteTask={onDeleteTask} />
-            ))
-          ) : (
-            <p style={{ textAlign: "center", color: "#888", fontSize: "0.9em" }}>
-              No tasks yet
-            </p>
-          )}
-        </div>
-      </SortableContext>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {column.tasks.map((task) => (
+          <li
+            key={task.id}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              marginBottom: "0.5rem",
+              background: "white",
+            }}
+          >
+            {task.title}
+            <button
+              style={{ marginLeft: "1rem", color: "red" }}
+              onClick={() => onDeleteTask(task.id)}
+            >
+              ✕
+            </button>
+          </li>
+        ))}
+      </ul>
 
-      {/* Add task form */}
-      <form onSubmit={handleSubmit} style={{ marginTop: "auto" }}>
+      <form onSubmit={handleSubmit} style={{ marginTop: "1rem" }}>
         <input
           type="text"
-          placeholder="New task..."
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
+          placeholder="New task..."
           style={{
             width: "100%",
-            padding: "6px",
-            border: "1px solid #ddd",
+            padding: "0.5rem",
+            border: "1px solid #ccc",
             borderRadius: "4px",
-            marginBottom: "4px",
           }}
         />
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "8px",
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
+        <button type="submit" style={{ marginTop: "0.5rem" }}>
           Add Task
         </button>
       </form>

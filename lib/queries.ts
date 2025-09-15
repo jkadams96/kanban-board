@@ -1,8 +1,8 @@
-// lib/queries.ts
 import { gql } from "@apollo/client";
 
-export const GET_COLUMNS = gql`
-  query GetColumns {
+// ✅ Board query
+export const GET_BOARD = gql`
+  query GetBoard {
     columns(order_by: { position: asc }) {
       id
       title
@@ -16,9 +16,26 @@ export const GET_COLUMNS = gql`
   }
 `;
 
-export const INSERT_COLUMN = gql`
-  mutation InsertColumn($title: String!) {
-    insert_columns_one(object: { title: $title }) {
+// ✅ Board subscription
+export const BOARD_SUBSCRIPTION = gql`
+  subscription BoardSubscription {
+    columns(order_by: { position: asc }) {
+      id
+      title
+      position
+      tasks(order_by: { position: asc }) {
+        id
+        title
+        position
+      }
+    }
+  }
+`;
+
+// ✅ Create column
+export const CREATE_COLUMN = gql`
+  mutation CreateColumn($title: String!, $position: Int!) {
+    insert_columns_one(object: { title: $title, position: $position }) {
       id
       title
       position
@@ -26,6 +43,7 @@ export const INSERT_COLUMN = gql`
   }
 `;
 
+// ✅ Delete column
 export const DELETE_COLUMN = gql`
   mutation DeleteColumn($id: uuid!) {
     delete_columns_by_pk(id: $id) {
@@ -34,30 +52,11 @@ export const DELETE_COLUMN = gql`
   }
 `;
 
-export const INSERT_TASK = gql`
-  mutation InsertTask($title: String!, $column_id: uuid!) {
-    insert_tasks_one(object: { title: $title, column_id: $column_id }) {
-      id
-      title
-      position
-      column_id
-    }
-  }
-`;
-
-export const DELETE_TASK = gql`
-  mutation DeleteTask($id: uuid!) {
-    delete_tasks_by_pk(id: $id) {
-      id
-    }
-  }
-`;
-
-export const UPDATE_TASK_POSITION = gql`
-  mutation UpdateTaskPosition($id: uuid!, $position: Int!, $column_id: uuid!) {
-    update_tasks_by_pk(
-      pk_columns: { id: $id }
-      _set: { position: $position, column_id: $column_id }
+// ✅ Create task
+export const ADD_TASK = gql`
+  mutation AddTask($title: String!, $column_id: uuid!, $position: Int!) {
+    insert_tasks_one(
+      object: { title: $title, column_id: $column_id, position: $position }
     ) {
       id
       title
@@ -66,20 +65,40 @@ export const UPDATE_TASK_POSITION = gql`
     }
   }
 `;
-export const GET_BOARD = gql`
-  query GetBoard {
-    board {
+
+// ✅ Update task position
+export const UPDATE_TASK_POSITION = gql`
+  mutation UpdateTaskPosition($id: uuid!, $column_id: uuid!, $position: Int!) {
+    update_tasks_by_pk(
+      pk_columns: { id: $id }
+      _set: { column_id: $column_id, position: $position }
+    ) {
+      id
+      column_id
+      position
+    }
+  }
+`;
+
+// ✅ Delete task
+export const DELETE_TASK = gql`
+  mutation DeleteTask($id: uuid!) {
+    delete_tasks_by_pk(id: $id) {
+      id
+    }
+  }
+`;
+
+export const GET_COLUMNS_WITH_TASKS = gql`
+  query GetColumnsWithTasks {
+    columns(order_by: { position: asc }) {
       id
       title
-      columns {
+      position
+      tasks(order_by: { position: asc }) {
         id
         title
         position
-        tasks {
-          id
-          title
-          position
-        }
       }
     }
   }

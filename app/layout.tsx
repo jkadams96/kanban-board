@@ -1,6 +1,10 @@
-// app/layout.tsx
 import Providers from "@/components/Providers";
 import "./globals.css";
+
+export const metadata = {
+  title: "Kanban App",
+  description: "Apollo + Hasura + Nhost Kanban",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

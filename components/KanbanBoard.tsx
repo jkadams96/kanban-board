@@ -7,7 +7,7 @@ import {
   DELETE_TASK,
   GET_COLUMNS_WITH_TASKS,
   UPDATE_TASK_POSITION,
-} from "../app/lib/queries";
+} from 'lib/queries';
 import Column from "./Column";
 
 export default function KanbanBoard() {
@@ -21,33 +21,34 @@ export default function KanbanBoard() {
 
   const columns = data?.columns || [];
 
-  // ✅ Add Task
+  // ✅ Add new task
   function handleAddTask(columnId: string, title: string) {
     addTask({
       variables: {
         title,
         column_id: columnId,
-        position: columns.find((c: any) => c.id === columnId)?.tasks.length || 0,
+        position:
+          columns.find((c: any) => c.id === columnId)?.tasks.length || 0,
       },
-      refetchQueries: [{ query: GET_COLUMNS_WITH_TASKS }], // refresh after add
-    });
+    })
+      .then(() => refetch())
+      .catch((err) => console.error("Add error:", err));
   }
 
-  // ✅ Delete Task
+  // ✅ Delete task
   function handleDeleteTask(taskId: string) {
-    deleteTask({
-      variables: { id: taskId },
-      refetchQueries: [{ query: GET_COLUMNS_WITH_TASKS }], // refresh after delete
-    });
+    deleteTask({ variables: { id: taskId } })
+      .then(() => refetch())
+      .catch((err) => console.error("Delete error:", err));
   }
 
-  // ✅ Drag/Drop
+  // ✅ Drag/drop reorder
   function handleDragEnd(event: any) {
     const { active, over } = event;
     if (!over) return;
 
     const sourceCol = columns.find((col: any) =>
-      col.tasks.some((t: any) => t.id === active.id)
+      col.tasks.some((t: any) => t.id === active.id) // 🔧 fix line 74
     );
     const destCol = columns.find(
       (col: any) =>
@@ -58,7 +59,9 @@ export default function KanbanBoard() {
     const sourceTaskIdx = sourceCol.tasks.findIndex(
       (t: any) => t.id === active.id
     );
-    let destTaskIdx = destCol.tasks.findIndex((t: any) => t.id === over.id);
+
+    // ✅ compute drop destination
+    let destTaskIdx = destCol.tasks.findIndex((t: any) => t.id === over.id); // 🔧 fix line 56
     if (destTaskIdx === -1) destTaskIdx = destCol.tasks.length;
 
     const movedTask = sourceCol.tasks[sourceTaskIdx];
@@ -69,8 +72,9 @@ export default function KanbanBoard() {
         position: destTaskIdx,
         column_id: destCol.id,
       },
-      refetchQueries: [{ query: GET_COLUMNS_WITH_TASKS }], // refresh after move
-    });
+    })
+      .then(() => refetch())
+      .catch((err) => console.error("Update error:", err));
   }
 
   return (

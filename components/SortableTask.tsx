@@ -1,41 +1,38 @@
 "use client";
 
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Task } from "app/lib/types";
 
-export default function SortableTask({ task, onDelete }: any) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: task.id,
-    });
+type SortableTaskProps = {
+  task: Task;
+  columnId: string;
+  index: number;
+  onDeleteTask: (id: string) => void;
+};
+
+export default function SortableTask({ task, columnId, index, onDeleteTask }: SortableTaskProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: task.id,
+  });
 
   const style = {
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      : undefined,
-    opacity: isDragging ? 0.5 : 1,
-    padding: "8px",
-    marginBottom: "8px",
-    background: "white",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    transform: CSS.Transform.toString(transform),
+    transition,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-gray-100 rounded-md p-2 flex justify-between items-center cursor-move"
+    >
       <span>{task.title}</span>
       <button
-        onClick={() => onDelete(task.id)}
-        style={{
-          marginLeft: "8px",
-          background: "transparent",
-          border: "none",
-          color: "red",
-          cursor: "pointer",
-          fontSize: "16px",
-        }}
+        onClick={() => onDeleteTask(task.id)}
+        className="text-red-500 font-bold hover:text-red-700"
       >
         ✕
       </button>
