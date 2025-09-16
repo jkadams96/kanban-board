@@ -1,63 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import SortableTask from "./SortableTask";
 
 type Task = {
   id: string;
   title: string;
+  createdBy?: string; // may be absent on some tasks
 };
 
-type ColumnType = {
+type Column = {
   id: string;
   title: string;
   tasks: Task[];
 };
 
-type ColumnProps = {
-  column: ColumnType;
-  onAddTask: (columnId: string, title: string) => void;
-  onDeleteTask: (taskId: string, columnId: string) => void;
-};
-
-export default function Column({ column, onAddTask, onDeleteTask }: ColumnProps) {
-  const [newTask, setNewTask] = useState("");
-
+export default function ColumnComponent({
+  column,
+  onAddTask,
+  onDeleteTask,
+}: {
+  column: Column;
+  onAddTask: (colId: string) => void;
+  onDeleteTask: (colId: string, taskId: string) => void;
+}) {
   return (
-    <div className="bg-gray-200 p-4 rounded-lg w-72">
-      <h2 className="font-bold text-lg mb-3">{column.title}</h2>
+    <div
+      style={{
+        flex: 1,
+        padding: "12px",
+        background: "#0f172a",
+        borderRadius: "8px",
+        minWidth: "220px",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <h2 style={{ color: "white", marginBottom: "8px" }}>{column.title}</h2>
 
-      <div className="flex gap-2 mb-3">
-        <input
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="New task..."
-          className="flex-1 px-2 py-1 border rounded"
-        />
-        <button
-          onClick={() => {
-            if (newTask.trim()) {
-              onAddTask(column.id, newTask);
-              setNewTask("");
-            }
-          }}
-          className="bg-blue-500 text-white px-3 py-1 rounded"
-        >
-          +
-        </button>
-      </div>
-
-      <div className="space-y-2">
-        {column.tasks.map((task, idx) => (
+      <SortableContext
+        items={column.tasks.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {column.tasks.map((task) => (
           <SortableTask
             key={task.id}
-            task={task}
-            columnId={column.id}
-            index={idx}
-            onDeleteTask={(id) => onDeleteTask(id, column.id)}
+            id={task.id}
+            title={task.title}
+            createdBy={task.createdBy ?? ""}   // ✅ pass createdBy so TS is happy
+            onDelete={(id) => onDeleteTask(column.id, id)}
           />
         ))}
-      </div>
+      </SortableContext>
+
+      <button
+        onClick={() => onAddTask(column.id)}
+        style={{
+          marginTop: "8px",
+          padding: "6px",
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+        }}
+      >
+        ＋ Add Task
+      </button>
     </div>
   );
 }

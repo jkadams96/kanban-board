@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { NhostClient } from '@nhost/nhost-js'
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+export const nhost = new NhostClient({
+  subdomain: process.env.NHOST_SUBDOMAIN || '',
+  region: process.env.NHOST_REGION || ''
+})

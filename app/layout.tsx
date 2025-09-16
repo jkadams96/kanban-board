@@ -1,12 +1,11 @@
-import Providers from "@/components/Providers";
 import "./globals.css";
+import Providers from "../components/Providers"; // ← fix: correct path & case
 
-export const metadata = {
-  title: "Kanban App",
-  description: "Apollo + Hasura + Nhost Kanban",
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>

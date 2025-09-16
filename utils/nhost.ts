@@ -1,6 +1,6 @@
 import { NhostClient } from "@nhost/nhost-js";
 
-// helper: treat empty envs as undefined
+// read envs; treat empty strings as undefined
 const env = (k: string) => {
   const v = process.env[k];
   return v && v.trim() !== "" ? v : undefined;
@@ -13,18 +13,20 @@ const subdomain =
 const region =
   env("NEXT_PUBLIC_NHOST_REGION") ?? env("NHOST_REGION");
 
+// create a real client only when config is valid; otherwise return a harmless stub
 function makeClient(): NhostClient {
-  // Build config first and cast to any so TS doesn't complain about 'backendUrl'
-  if (backendUrl || (subdomain && region)) {
-    const cfg: any = backendUrl ? { backendUrl } : { subdomain, region };
-    return new NhostClient(cfg);
+  if (backendUrl) {
+    return new NhostClient({ backendUrl } as any);
+  }
+  if (subdomain && region) {
+    return new NhostClient({ subdomain, region } as any);
   }
 
-  // Fallback stub so the app doesn't crash without envs
+  // fallback so the UI can render without envs
   if (typeof console !== "undefined") {
     console.warn(
       "[nhost] Missing configuration. Set NEXT_PUBLIC_NHOST_BACKEND_URL, " +
-      "or NEXT_PUBLIC_NHOST_SUBDOMAIN and NEXT_PUBLIC_NHOST_REGION in .env.local."
+        "or NEXT_PUBLIC_NHOST_SUBDOMAIN and NEXT_PUBLIC_NHOST_REGION in .env.local."
     );
   }
   const stub: any = {
@@ -40,7 +42,7 @@ function makeClient(): NhostClient {
 
 export const nhost = makeClient();
 
-// optional convenience
+// optional: keep existing call sites working
 export function getNhost() {
   return nhost;
 }

@@ -103,3 +103,4 @@ export const GET_COLUMNS_WITH_TASKS = gql`
     }
   }
 `;
+// lib/queries.ts

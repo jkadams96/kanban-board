@@ -1,9 +1,7 @@
 "use client";
 
-import client from "@/lib/apolloClient";
-import { ApolloProvider } from "@apollo/client";
-import { ReactNode } from "react";
+import AuthProvider from "@components/AuthProvider";
 
-export default function Providers({ children }: { children: ReactNode }) {
-  return <ApolloProvider client={client}>{children}</ApolloProvider>;
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return <AuthProvider>{children}</AuthProvider>;
 }
